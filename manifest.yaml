@@ -8,7 +8,7 @@ resources:
     deploy_method: scp
     deployment_targets:
       organizational_units:
-        - Customer
+        - Root
 
   - name: DenyOrganizations
     description: SCP to hide Organizations API, block management account access, and deny IAM console access
@@ -18,3 +18,10 @@ resources:
       organizational_units:
         - Customer
 
+  - name: DenyServices
+    description: SCP to deny all AI services and large instance types
+    resource_file: policies/deny_services.json
+    deploy_method: scp
+    deployment_targets:
+      organizational_units:
+        - Root
