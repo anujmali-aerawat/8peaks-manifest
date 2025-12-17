@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Budget with SNS alerts for cost monitoring
+
+Parameters:
+  BudgetName:
+    Type: String
+    Default: monthly-cost-budget
+    Description: Name of the budget
+
+  BudgetAmount:
+    Type: Number
+    Default: 100
+    Description: Monthly budget amount in USD
+
+  AlertEmail:
+    Type: String
+    Description: Email address for budget alerts
+
+  Threshold1:
+    Type: Number
+    Default: 50
+    Description: First alert threshold (percentage)
+
+  Threshold2:
+    Type: Number
+    Default: 80
+    Description: Second alert threshold (percentage)
+
+  Threshold3:
+    Type: Number
+    Default: 100
+    Description: Third alert threshold (percentage)
+
+Resources:
+  BudgetAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${BudgetName}-alerts'
+      DisplayName: Budget Alert Notifications
+
+  BudgetAlertTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref BudgetAlertTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowBudgetsToPublish
+            Effect: Allow
+            Principal:
+              Service: budgets.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref BudgetAlertTopic
+
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref BudgetAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  MonthlyCostBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Ref BudgetName
+        BudgetLimit:
+          Amount: !Ref BudgetAmount
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: !Ref Threshold1
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref BudgetAlertTopic
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: !Ref Threshold2
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref BudgetAlertTopic
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: !Ref Threshold3
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref BudgetAlertTopic
+
+Outputs:
+  BudgetAlertTopicArn:
+    Description: ARN of the SNS topic for budget alerts
+    Value: !Ref BudgetAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-BudgetAlertTopicArn'
+
+  BudgetName:
+    Description: Name of the created budget
+    Value: !Ref BudgetName
