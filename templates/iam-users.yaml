@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM users with Admin and ReadOnly access policies
+
+Parameters:
+  AdminUserName:
+    Type: String
+    Default: admin-user
+    Description: Username for the admin IAM user
+
+  ReadOnlyUserName:
+    Type: String
+    Default: readonly-user
+    Description: Username for the read-only IAM user
+
+  CreateLoginProfile:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Whether to create console login profiles for users
+
+Conditions:
+  CreateLoginProfiles: !Equals [!Ref CreateLoginProfile, 'true']
+
+Resources:
+  AdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref AdminUserName
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: Purpose
+          Value: Administrative access
+        - Key: ManagedBy
+          Value: ControlTower
+
+  AdminUserLoginProfile:
+    Type: AWS::IAM::LoginProfile
+    Condition: CreateLoginProfiles
+    Properties:
+      UserName: !Ref AdminUser
+      PasswordResetRequired: true
+      Password: !Sub '{{resolve:secretsmanager:${AdminUserSecret}:SecretString:password}}'
+
+  AdminUserSecret:
+    Type: AWS::SecretsManager::Secret
+    Condition: CreateLoginProfiles
+    Properties:
+      Name: !Sub '${AdminUserName}-credentials'
+      Description: !Sub 'Credentials for ${AdminUserName}'
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${AdminUserName}"}'
+        GenerateStringKey: password
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  ReadOnlyUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref ReadOnlyUserName
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      Tags:
+        - Key: Purpose
+          Value: Read-only access
+        - Key: ManagedBy
+          Value: ControlTower
+
+  ReadOnlyUserLoginProfile:
+    Type: AWS::IAM::LoginProfile
+    Condition: CreateLoginProfiles
+    Properties:
+      UserName: !Ref ReadOnlyUser
+      PasswordResetRequired: true
+      Password: !Sub '{{resolve:secretsmanager:${ReadOnlyUserSecret}:SecretString:password}}'
+
+  ReadOnlyUserSecret:
+    Type: AWS::SecretsManager::Secret
+    Condition: CreateLoginProfiles
+    Properties:
+      Name: !Sub '${ReadOnlyUserName}-credentials'
+      Description: !Sub 'Credentials for ${ReadOnlyUserName}'
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${ReadOnlyUserName}"}'
+        GenerateStringKey: password
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+Outputs:
+  AdminUserArn:
+    Description: ARN of the admin IAM user
+    Value: !GetAtt AdminUser.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AdminUserArn'
+
+  ReadOnlyUserArn:
+    Description: ARN of the read-only IAM user
+    Value: !GetAtt ReadOnlyUser.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ReadOnlyUserArn'
+
+  AdminUserSecretArn:
+    Condition: CreateLoginProfiles
+    Description: ARN of the Secrets Manager secret containing admin credentials
+    Value: !Ref AdminUserSecret
+
+  ReadOnlyUserSecretArn:
+    Condition: CreateLoginProfiles
+    Description: ARN of the Secrets Manager secret containing read-only credentials
+    Value: !Ref ReadOnlyUserSecret

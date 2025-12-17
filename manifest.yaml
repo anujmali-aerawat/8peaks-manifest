@@ -28,3 +28,11 @@ resources:
     parameters:
       - parameter_key: AlertEmail
         parameter_value: "your-email@8peaks.io"
+
+  - name: IAMUsers
+    description: Admin and ReadOnly IAM users
+    resource_file: templates/iam-users.yaml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Customer
