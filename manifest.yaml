@@ -25,3 +25,6 @@ resources:
     deployment_targets:
       organizational_units:
         - Customer
+    parameters:
+      - parameter_key: AlertEmail
+        parameter_value: "your-email@8peaks.io"
