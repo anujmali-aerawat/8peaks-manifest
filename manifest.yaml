@@ -25,3 +25,29 @@ resources:
     deployment_targets:
       organizational_units:
         - Customer
+
+  - name: IAMBaseline
+    description: IAM baseline with security audit role, billing role, and password policy
+    resource_file: templates/iam-baseline.yaml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Customer
+    parameters:
+      - parameter_key: ManagementAccountId
+        parameter_value: '204726797441'
+      - parameter_key: MaxSessionDuration
+        parameter_value: '3600'
+
+  - name: Budgets
+    description: AWS Budgets for cost management and alerts
+    resource_file: templates/budgets.yaml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Customer
+    parameters:
+      - parameter_key: BudgetAmount
+        parameter_value: '100'
+      - parameter_key: NotificationEmail
+        parameter_value: 'alerts@example.com'

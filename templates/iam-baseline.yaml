@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM Baseline Template for Control Tower managed accounts
+
+Parameters:
+  AdminRoleName:
+    Type: String
+    Default: OrganizationAccountAccessRole
+    Description: Name of the admin role for cross-account access
+
+  MaxSessionDuration:
+    Type: Number
+    Default: 3600
+    Description: Maximum session duration in seconds (1-12 hours)
+    MinValue: 3600
+    MaxValue: 43200
+
+  ManagementAccountId:
+    Type: String
+    Description: AWS Account ID of the Management Account
+    AllowedPattern: '^\d{12}$'
+
+Resources:
+  # Read-Only Role for Security Auditing
+  SecurityAuditRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SecurityAuditRole
+      Description: Read-only role for security auditing and compliance
+      MaxSessionDuration: !Ref MaxSessionDuration
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${ManagementAccountId}:root'
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: 'true'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecurityAudit
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: ManagedBy
+          Value: ControlTower
+
+  # Billing Access Role
+  BillingAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BillingAccessRole
+      Description: Role for billing and cost management access
+      MaxSessionDuration: !Ref MaxSessionDuration
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${ManagementAccountId}:root'
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: 'true'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/job-function/Billing
+        - arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: ManagedBy
+          Value: ControlTower
+
+  # Password Policy
+  IAMPasswordPolicy:
+    Type: AWS::IAM::AccountPasswordPolicy
+    Properties:
+      MinimumPasswordLength: 14
+      RequireSymbols: true
+      RequireNumbers: true
+      RequireUppercaseCharacters: true
+      RequireLowercaseCharacters: true
+      AllowUsersToChangePassword: true
+      MaxPasswordAge: 90
+      PasswordReusePrevention: 24
+      HardExpiry: false
+
+Outputs:
+  SecurityAuditRoleArn:
+    Description: ARN of the Security Audit Role
+    Value: !GetAtt SecurityAuditRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityAuditRoleArn'
+
+  BillingAccessRoleArn:
+    Description: ARN of the Billing Access Role
+    Value: !GetAtt BillingAccessRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BillingAccessRoleArn'
