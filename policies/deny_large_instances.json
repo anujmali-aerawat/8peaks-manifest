@@ -1,0 +1,129 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyAIServices",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:*",
+        "bedrock:*",
+        "comprehend:*",
+        "comprehendmedical:*",
+        "rekognition:*",
+        "textract:*",
+        "transcribe:*",
+        "translate:*",
+        "personalize:*",
+        "forecast:*",
+        "lookoutvision:*",
+        "lookoutequipment:*",
+        "lookoutmetrics:*",
+        "kendra:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyLargeAndGPUInstances",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:CreateFleet"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAllValues:StringLike": {
+          "ec2:InstanceType": [
+            "p*",
+            "g*",
+            "inf*",
+            "trn*",
+            "dl*",
+            "vt*",
+            "*.8xlarge",
+            "*.9xlarge",
+            "*.10xlarge",
+            "*.12xlarge",
+            "*.16xlarge",
+            "*.18xlarge",
+            "*.24xlarge",
+            "*.32xlarge",
+            "*.48xlarge",
+            "*.56xlarge",
+            "*.96xlarge",
+            "*.metal"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "DenyLargeRDSInstances",
+      "Effect": "Deny",
+      "Action": [
+        "rds:CreateDBInstance",
+        "rds:ModifyDBInstance",
+        "rds:CreateDBCluster"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAllValues:StringLike": {
+          "rds:DatabaseClass": [
+            "db.p*",
+            "db.g*",
+            "db.inf*",
+            "db.trn*",
+            "db.*.8xlarge",
+            "db.*.9xlarge",
+            "db.*.10xlarge",
+            "db.*.12xlarge",
+            "db.*.16xlarge",
+            "db.*.18xlarge",
+            "db.*.24xlarge",
+            "db.*.32xlarge",
+            "db.*.48xlarge",
+            "db.*.56xlarge",
+            "db.*.96xlarge",
+            "db.*.metal"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "DenyLargeSageMakerInstances",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateNotebookInstance",
+        "sagemaker:UpdateNotebookInstance",
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob",
+        "sagemaker:CreateTransformJob",
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateEndpointConfig"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAllValues:StringLike": {
+          "sagemaker:InstanceTypes": [
+            "ml.p*",
+            "ml.g*",
+            "ml.inf*",
+            "ml.trn*",
+            "ml.dl*",
+            "ml.vt*",
+            "*.8xlarge",
+            "*.9xlarge",
+            "*.10xlarge",
+            "*.12xlarge",
+            "*.16xlarge",
+            "*.18xlarge",
+            "*.24xlarge",
+            "*.32xlarge",
+            "*.48xlarge",
+            "*.56xlarge",
+            "*.96xlarge",
+            "*.metal"
+          ]
+        }
+      }
+    }
+  ]
+}

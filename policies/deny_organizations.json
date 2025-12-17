@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "HideOrganizationsAPI",
+      "Effect": "Deny",
+      "Action": [
+        "organizations:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "BlockAssumeRoleIntoManagement",
+      "Effect": "Deny",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::204726797441:role/*"
+    },
+    {
+      "Sid": "DenyCreatingIAMUsersWithConsoleAccess",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateLoginProfile",
+        "iam:UpdateLoginProfile"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyChangingOwnPassword",
+      "Effect": "Deny",
+      "Action": "iam:ChangePassword",
+      "Resource": "*"
+    }
+  ]
+}
